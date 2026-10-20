@@ -29,7 +29,7 @@ export function profilePath(
   if (platform === "win32")
     return path.win32.join(appData, "GlobalMarketTerminalWindows", "Phase1");
   if (platform === "darwin")
-    return path.join(projectRoot, ".local-profile", "mac-preview");
+    return path.posix.join(projectRoot, ".local-profile", "mac-preview");
   throw Error(
     "Only Windows distribution and macOS development preview are supported",
   );
