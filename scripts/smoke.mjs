@@ -36,16 +36,16 @@ try {
     .waitFor();
   await page.locator('[data-chart-ready="true"] canvas').first().waitFor();
   assertions.push("production HTML, JavaScript, CSS and chart canvas load");
+  stage = "authenticated local readiness";
+  await page
+    .locator('[data-testid="service-status"][data-state="ready"]')
+    .waitFor({ timeout: 25000 });
   assert.ok(
     await page
       .getByText("Live market providers are not connected in Phase 1.")
       .isVisible(),
   );
   assertions.push("honest offline message");
-  stage = "authenticated local readiness";
-  await page
-    .locator('[data-testid="service-status"][data-state="ready"]')
-    .waitFor({ timeout: 25000 });
   const health = await page.evaluate(() => window.terminal.health());
   assert.equal(health.providersConnected, false);
   assert.equal(health.marketHistoryStorage, "none");
