@@ -3,6 +3,8 @@ Independent implementation; no market-data redistribution rights are granted.
 
 TradingView Lightweight Charts™
 Copyright (с) 2025 TradingView, Inc. https://www.tradingview.com/
+The installed 5.2.1 distribution header additionally credits Copyright (c) 2026 TradingView, Inc.
+The exact v5.2.1 upstream NOTICE is retained under THIRD_PARTY_NOTICES/npm/lightweight-charts/NOTICE.
 Lightweight Charts 5.2.1 is licensed under Apache License 2.0.
 Source: https://github.com/tradingview/lightweight-charts/tree/v5.2.1
 The attribution logo remains enabled and the dashboard links to TradingView.
