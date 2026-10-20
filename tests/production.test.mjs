@@ -24,8 +24,8 @@ test("empty chart implementation has no series or demonstration market data", ()
   assert.ok(!/sqlite|yfinance|OHLCV|open\(/.test(backend));
   assert.ok(backend.includes('"marketHistoryStorage": "none"'));
 });
-test("non-Windows packaging fails before touching outputs", () => {
-  if (process.platform === "win32") return;
+test(process.platform === "win32" ? "native Windows runner satisfies the x64 packaging precondition" : "non-Windows packaging fails before touching outputs", () => {
+  if (process.platform === "win32") { assert.equal(process.arch, "x64"); return; }
   const result = spawnSync(process.execPath, ["scripts/package-windows.mjs"], {
     encoding: "utf8",
   });

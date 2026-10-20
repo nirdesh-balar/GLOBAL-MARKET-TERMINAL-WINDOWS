@@ -25,14 +25,14 @@ NSIS uses a distinct app ID `io.github.nirdeshbalar.globalmarketterminal.windows
 
 ## Independent GitHub repository
 
-The exact proposed public operation, requiring owner approval, is:
+The owner approved this exact public repository creation/push operation in chat on 2026-10-20:
 
 ```sh
 cd ~/Documents/Codex/GLOBAL-MARKET-TERMINAL-WINDOWS
 gh repo create nirdesh-balar/GLOBAL-MARKET-TERMINAL-WINDOWS --public --source=. --remote=origin --push
 ```
 
-First inspect `git status`, `git log --oneline --max-count=3`, `git remote -v`, and `git ls-files`. Confirm this is the Windows repository and no read-only source snapshot, credentials, user profile, node_modules or build output is tracked. Never run these write operations from the original Mac checkout. Use only an already authenticated, owner-approved GitHub session; do not request, paste or print credentials. GitHub CLI was absent on the implementation host. No remote creation/push is implied by local implementation.
+First inspect `git status`, `git log --oneline --max-count=3`, `git remote -v`, and `git ls-files`. Confirm this is the Windows repository and no read-only source snapshot, credentials, user profile, node_modules or build output is tracked. Never run these write operations from the original Mac checkout. Use only an already authenticated, owner-approved GitHub session; do not request, paste or print credentials. GitHub CLI was initially absent. Official CLI 2.102.0 was subsequently installed only in the chat scratch directory and verified against its official checksum. Its authentication check reported no authenticated hosts; the available browser also required sign-in. Owner approval is recorded, but successful local authentication is still required before the approved operation can run. No remote creation/push is implied by local implementation.
 
 A public independent repository is preferred for standard hosted-runner free usage. Preserve the account owner's repository write permissions and any organization policies. Check current Actions billing/quotas before using private repository minutes. Do not enable paid services.
 
