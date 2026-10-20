@@ -14,3 +14,18 @@ work/
 .DS_Store
 *.log
 .env
+
+# Never publish credentials, private data, or generated installers.
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.db
+*.exe
+*.dll
+*.dmg
+*.zip
