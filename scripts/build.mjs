@@ -11,6 +11,8 @@ await bundle({
     "desktop/electron/platform.ts",
     "desktop/electron/security.ts",
     "desktop/electron/backend.ts",
+    "desktop/electron/native.ts",
+    "desktop/electron/csv.ts",
   ],
   outdir: "dist-electron",
   outExtension: { ".js": ".cjs" },

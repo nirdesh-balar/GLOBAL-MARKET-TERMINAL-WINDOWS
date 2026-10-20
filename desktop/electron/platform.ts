@@ -27,7 +27,7 @@ export function profilePath(
   projectRoot: string,
 ) {
   if (platform === "win32")
-    return path.win32.join(appData, "GlobalMarketTerminalWindows", "Phase1");
+    return path.win32.join(appData, "GlobalMarketTerminalWindows.Native", "Desktop");
   if (platform === "darwin")
     return path.posix.join(projectRoot, ".local-profile", "mac-preview");
   throw Error(

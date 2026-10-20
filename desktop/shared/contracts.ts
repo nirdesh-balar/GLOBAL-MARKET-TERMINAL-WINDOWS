@@ -15,9 +15,16 @@ export interface TerminalBridge {
   status: () => Promise<ServiceStatus>;
   health: () => Promise<Health>;
   openAttribution: () => Promise<void>;
+  window: (action: WindowAction) => Promise<WindowState>;
+  onWindowState: (listener: (state: WindowState) => void) => () => void;
+  previewCsv: () => Promise<CsvPreview>;
 }
 declare global {
   interface Window {
     terminal: TerminalBridge;
   }
 }
+
+export type WindowAction = "state" | "minimize" | "maximize" | "restore" | "toggleMaximize" | "enterFullscreen" | "exitFullscreen" | "toggleFullscreen" | "focus";
+export interface WindowState { transitioning: boolean; minimized: boolean; maximized: boolean; fullscreen: boolean; focused: boolean; width: number; height: number }
+export interface CsvPreview { cancelled: boolean; rows?: number; columns?: number; bytes?: number }

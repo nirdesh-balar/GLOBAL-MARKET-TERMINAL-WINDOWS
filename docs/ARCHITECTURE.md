@@ -1,3 +1,5 @@
+> Current Phase 2 implementation: see [native integration design](PHASE-2-NATIVE-INTEGRATION.md). The Phase 1/1.1 material below is historical where superseded.
+
 # Phase 1 architecture
 
 The renderer is an unprivileged React application. Its typed preload bridge exposes exactly `status()`, `health()`, and `openAttribution()`. The latter opens only the constant `https://www.tradingview.com/` URL in the system browser; arguments supplied by JavaScript are discarded. It cannot open arbitrary links. There is no filesystem, shell, process, HTTP URL, backend port, token, raw ipcRenderer or Node exposure.

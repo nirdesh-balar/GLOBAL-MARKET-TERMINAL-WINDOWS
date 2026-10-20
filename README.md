@@ -1,3 +1,5 @@
+> Current Phase 2 implementation: see [native integration design](docs/PHASE-2-NATIVE-INTEGRATION.md). The Phase 1/1.1 material below is historical where superseded.
+
 # GLOBAL MARKET TERMINAL — Windows
 
 Independent Windows 11 x64 desktop application, version **0.1.0**, Phase 1 only.

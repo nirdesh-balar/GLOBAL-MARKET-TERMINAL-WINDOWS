@@ -54,14 +54,19 @@ THIRD_PARTY_NOTICES/python/uvicorn/licenses/LICENSE.md
 backend/app/__init__.py
 backend/app/main.py
 backend/launcher.py
+backend/profile_security.py
 backend/requirements.in
 backend/requirements.lock
 backend/tests/test_app.py
 backend/tests/test_process.py
+backend/windows_tests/test_profile.py
 desktop/electron/backend.ts
+desktop/electron/csv.ts
 desktop/electron/main.ts
+desktop/electron/native.ts
 desktop/electron/platform.ts
 desktop/electron/preload.ts
+desktop/electron/profile.ts
 desktop/electron/security.ts
 desktop/index.html
 desktop/shared/contracts.ts
@@ -77,6 +82,7 @@ docs/ARCHITECTURE.md
 docs/FILE-MANIFEST.txt
 docs/PHASE-1-REPORT.md
 docs/PHASE-1.1-REPORT.md
+docs/PHASE-2-NATIVE-INTEGRATION.md
 docs/PUBLICATION-AUDIT.md
 docs/RELEASE-GATES.md
 docs/SOURCE-AUDIT.md
@@ -92,6 +98,7 @@ scripts/build.mjs
 scripts/common.mjs
 scripts/dev.mjs
 scripts/frozen-smoke.mjs
+scripts/native-smoke.mjs
 scripts/notices.mjs
 scripts/package-windows.mjs
 scripts/python-notices.py
@@ -101,6 +108,7 @@ scripts/terminal-ui.mjs
 scripts/test.mjs
 scripts/verify-artifacts.mjs
 tests/backend.test.mjs
+tests/native.test.mjs
 tests/production.test.mjs
 tests/security.test.mjs
 tests/terminal.test.mjs

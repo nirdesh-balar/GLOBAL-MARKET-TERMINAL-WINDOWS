@@ -1,13 +1,13 @@
-name: Windows Phase 1 development candidate
+name: Windows native development candidate
 on:
   push:
-    branches: [main]
+    branches: [main, phase-2-native-integration]
   pull_request:
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: windows-phase1-${{ github.ref }}
+  group: windows-native-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   windows-x64:
@@ -68,7 +68,11 @@ jobs:
       - name: Native PyInstaller, frozen smoke, Electron directory and NSIS build
         run: npm run package:windows
       - name: Packaged Electron startup, offline assets, IPC and shutdown smoke
-        run: npm run test:packaged
+        run: |
+          npm run test:packaged
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/native-smoke.mjs --packaged
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify expected packaged files and calculate SHA-256
         run: node scripts/verify-artifacts.mjs
       - name: Record unverified interactive acceptance
@@ -79,7 +83,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: gmt-windows-phase1-reports-${{ github.sha }}
+          name: gmt-windows-native-reports-${{ github.sha }}
           path: reports/
           if-no-files-found: error
           retention-days: 7
@@ -87,7 +91,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: gmt-windows-phase1-unsigned-x64-${{ github.sha }}
+          name: gmt-windows-native-unsigned-x64-${{ github.sha }}
           path: |
             release/GMT-Windows-0.1.0-dev-x64-Setup.exe
             release/SHA256SUMS.txt

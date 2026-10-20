@@ -1,3 +1,5 @@
+> Current Phase 2 implementation: see [native integration design](PHASE-2-NATIVE-INTEGRATION.md). The Phase 1/1.1 material below is historical where superseded.
+
 # Windows builds and remote setup
 
 Use Node 22.23.3/npm 10.9.9 and native Python 3.11.17 x64. On a fresh Windows checkout, set `GMT_PYTHON` to that exact Python executable and run:

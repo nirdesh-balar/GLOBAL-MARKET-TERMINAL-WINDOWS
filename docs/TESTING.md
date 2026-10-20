@@ -1,3 +1,5 @@
+> Current Phase 2 implementation: see [native integration design](PHASE-2-NATIVE-INTEGRATION.md). The Phase 1/1.1 material below is historical where superseded.
+
 # Phase 1 verification
 
 `npm run test` checks TypeScript, builds production assets/main/preload, runs Node tests, runs Python tests, then launches a real Electron production-assets smoke test. No `--no-sandbox`, mock candle data, real provider calls, protected profile access or paid service is used. Socket and GUI permissions are needed on the development host. In a restricted automation environment, rerun the same test under the authorized local-network/GUI execution permission; do not weaken authentication or disable Electron's sandbox.

@@ -44,6 +44,8 @@ export class Backend {
     message: "Starting authenticated local service",
   };
   #healthPending?: Promise<Health>;
+  #healthAbort?: AbortController;
+  #stopPending?: Promise<void>;
   constructor(
     private command: string,
     private args: string[],
@@ -127,6 +129,7 @@ export class Backend {
           try {
             const v = JSON.parse(output.slice(0, newline));
             if (
+              !v || Object.keys(v).sort().join(",") !== "host,port,ready" ||
               v.ready !== true ||
               v.host !== "127.0.0.1" ||
               !Number.isInteger(v.port) ||
@@ -147,7 +150,7 @@ export class Backend {
         child.once("error", failed);
         child.once("exit", earlyExit);
         child.stdout.on("data", data);
-        child.stdin.write(JSON.stringify({ token: this.#token }) + "\n");
+        child.stdin.write(JSON.stringify({ token: this.#token, parentPid: process.pid }) + "\n");
       });
       child.stdout.resume();
       await this.health();
@@ -176,16 +179,27 @@ export class Backend {
     if (this.#stopping || !this.#port)
       throw Error("Local service is unavailable");
     if (this.#healthPending) return this.#healthPending;
+    this.#healthAbort = new AbortController();
+    const signal = AbortSignal.any([this.#healthAbort.signal, AbortSignal.timeout(2000)]);
     this.#healthPending = (async () => {
       const response = await fetch(`http://127.0.0.1:${this.#port}/health`, {
         method: "GET",
         headers: { Authorization: `Bearer ${this.#token}` },
         redirect: "error",
-        signal: AbortSignal.timeout(2000),
+        signal,
       });
       if (!response.ok) throw Error("Local health check failed");
-      const text = await response.text();
-      if (text.length > 4096) throw Error("Invalid local response");
+      if (!response.body) throw Error("Invalid local response");
+      const reader=response.body.getReader(); let size=0; const chunks: Buffer[]=[];
+      try {
+        for (;;) {
+          const {done,value}=await reader.read(); if(done) break;
+          size+=value.byteLength;
+          if(size>4096) { await reader.cancel(); throw Error("Invalid local response"); }
+          chunks.push(Buffer.from(value));
+        }
+      } finally { reader.releaseLock(); }
+      const text=Buffer.concat(chunks).toString("utf8");
       const v = JSON.parse(text);
       if (
         v.status !== "ok" ||
@@ -222,9 +236,14 @@ export class Backend {
     }
   }
   async stop() {
+    if(this.#stopPending) return this.#stopPending;
     this.#stopping = true;
-    await stopOwnedChild(this.#child, this.#token);
-    this.#port = 0;
-    this.#status = { state: "stopped", message: "Local service stopped" };
+    this.#healthAbort?.abort();
+    this.#stopPending=(async () => {
+      await stopOwnedChild(this.#child, this.#token);
+      this.#port = 0;
+      this.#status = { state: "stopped", message: "Local service stopped" };
+    })();
+    return this.#stopPending;
   }
 }
