@@ -20,3 +20,11 @@ Native Windows workflow additionally runs the process tests against the **actual
 Separate evidence categories must be retained: (1) local macOS development/production-asset checks; (2) native Windows automated unit checks; (3) frozen backend and packaged Electron smoke; (4) Windows 11 interactive installer/application acceptance. A macOS pass proves only category 1. All other categories remain NOT VERIFIED without their own evidence. A Windows Server 2022 hosted-runner pass is not Windows 11 interactive acceptance.
 
 See PHASE-1-REPORT.md for actual final counts, results and errors. There are no intentionally skipped tests or xfail markers. A platform-conditional command guard assertion is exercised on macOS; Windows guard behavior is also tested with explicit platform/architecture inputs.
+
+## Phase 1.1 additions
+
+`npm run test` retains the original Node, Python and 11-assertion Electron smoke suites, and additionally executes tests/terminal.test.mjs plus scripts/terminal-ui.mjs. There are five new Node checks covering view-state distinctions, minute/month semantics, resize bounds, absence of financial/preference storage APIs and server-rendered empty/loading/offline/backend/provider-error presentations. The server rendering test supplies state descriptions only, with no market data or mocked quotes.
+
+The terminal Electron suite checks the compact layout, unclipped main-toolbar buttons, native minimum content size, sidebar collapse/pointer resize/keyboard controls, grid/cursor selection, focus restoration, disabled future controls, repeated canvas resizing, state reset on reload, empty local/session storage and IndexedDB, error-free console, and normal owned-child shutdown. Captures are actual Electron renderer screenshots at 1920×1080, 1536×864, 1366×768, native minimum content size, and narrow width with the watchlist explicitly expanded. Metrics are in reports/phase11/terminal-ui.json; these are viewport screenshots rather than Windows native-titlebar captures.
+
+After `npm run build`, run `node scripts/terminal-ui.mjs` for the new UI suite alone. `node scripts/terminal-ui.mjs --packaged` is available only with a real native Windows unpacked package. No Windows execution is inferred from the Mac run. Renderer resize automation wall time is reported as an observation, not a frame-rate or Windows performance benchmark.

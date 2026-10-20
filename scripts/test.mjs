@@ -9,6 +9,7 @@ await run(process.execPath, [
   "tests/security.test.mjs",
   "tests/backend.test.mjs",
   "tests/production.test.mjs",
+  "tests/terminal.test.mjs",
 ]);
 await run(python, [
   "-m",
@@ -18,3 +19,5 @@ await run(python, [
   "--junitxml=reports/backend-tests.xml",
 ]);
 await run(process.execPath, ["scripts/smoke.mjs"]);
+
+await run(process.execPath, ["scripts/terminal-ui.mjs"]);

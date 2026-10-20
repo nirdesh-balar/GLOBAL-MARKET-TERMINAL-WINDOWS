@@ -7,7 +7,9 @@ The installed 5.2.1 distribution header additionally credits Copyright (c) 2026 
 The exact v5.2.1 upstream NOTICE is retained under THIRD_PARTY_NOTICES/npm/lightweight-charts/NOTICE.
 Lightweight Charts 5.2.1 is licensed under Apache License 2.0.
 Source: https://github.com/tradingview/lightweight-charts/tree/v5.2.1
-The attribution logo remains enabled and the dashboard links to TradingView.
+Phase 1.1 retains a visible TradingView / Lightweight Charts attribution link.
+The optional logo widget is disabled because its injected inline CSS is blocked
+by the unchanged packaged CSP; no CSP exception is introduced.
 See THIRD_PARTY_NOTICES/npm/lightweight-charts/LICENSE.
 
 React, React DOM and scheduler: MIT. Lucide icons: ISC (see package license).

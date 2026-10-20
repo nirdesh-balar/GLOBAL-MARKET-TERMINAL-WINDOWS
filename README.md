@@ -1,7 +1,7 @@
 # GLOBAL MARKET TERMINAL — Windows
 
 Independent Windows 11 x64 desktop application, version **0.1.0**, Phase 1 only.
-A read-only analysis shell with a real authenticated local backend and an intentionally empty Lightweight Charts workspace. Live providers, instruments, watchlists, trading, updates and market-history storage are absent.
+A compact read-only charting terminal shell with a real authenticated local backend and an intentionally empty Lightweight Charts workspace. Phase 1.1 adds the screenshot-inspired toolbars, drawing rail and resizable right watchlist; enabled view changes last only for the current session. Live providers, instruments, watchlists, trading, updates and market-history storage are absent.
 
 Distribution target: unsigned NSIS **per-user EXE**, built only on native Windows x64. macOS Apple Silicon is a development preview host. No official release is authorized or published.
 
