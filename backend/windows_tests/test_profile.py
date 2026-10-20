@@ -81,3 +81,11 @@ def test_selected_file_native_pinned_read_no_reparse_or_directory(tmp_path):
     large=tmp_path/'large.csv';large.write_bytes(b'x'*65537)
     with pytest.raises(ProfileSecurityError):g.selected_bytes(str(large))
     assert file.read_bytes()==b'first,second\nalpha,beta\n'
+
+
+def test_owner_policy_rejects_other_users_and_admin_owned_managed_roots(tmp_path):
+    g=WindowsSecurity()
+    assert g.owner_allowed(g.sid,protected=True)
+    assert not g.owner_allowed('S-1-5-21-1-2-3-9876')
+    assert not g.owner_allowed('S-1-5-32-544',protected=True)
+    assert g.owner_allowed('S-1-5-32-544') == (g.elevated and g.default_owner=='S-1-5-32-544')

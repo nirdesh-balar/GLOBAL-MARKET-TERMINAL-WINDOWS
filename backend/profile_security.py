@@ -59,7 +59,15 @@ class WindowsSecurity:
             size = W.DWORD(); self.token_info(token,1,None,0,C.byref(size))
             buf = C.create_string_buffer(size.value)
             self.check(self.token_info(token,1,buf,size,C.byref(size)))
-            return self.sid_text(C.cast(buf,C.POINTER(C.c_void_p))[0])
+            user = self.sid_text(C.cast(buf,C.POINTER(C.c_void_p))[0])
+            self.token_info(token,4,None,0,C.byref(size))
+            owner_buf=C.create_string_buffer(size.value)
+            self.check(self.token_info(token,4,owner_buf,size,C.byref(size)))
+            self.default_owner=self.sid_text(C.cast(owner_buf,C.POINTER(C.c_void_p))[0])
+            elevated=W.DWORD()
+            self.check(self.token_info(token,20,C.byref(elevated),C.sizeof(elevated),C.byref(size)))
+            self.elevated=bool(elevated.value)
+            return user
         finally: self.close(token)
 
     @contextmanager
@@ -74,12 +82,21 @@ class WindowsSecurity:
             yield h, bool(tag[0] & 0x10)
         finally: self.close(h)
 
+    def owner_allowed(self, owner, protected=False):
+        # Managed roots always have explicit current-user ownership. An elevated
+        # Windows token can make Chromium incidental children Administrators-
+        # owned by default. Accept that existing privileged identity only when
+        # this token proves both elevation and that exact default owner. Never
+        # accept another ordinary user or broaden the two-entry DACL.
+        return owner == self.sid or (not protected and self.elevated and
+            self.default_owner == "S-1-5-32-544" and owner == self.default_owner)
+
     def verify(self, h, protected=False):
         owner=C.c_void_p(); acl=C.c_void_p(); sd=C.c_void_p()
         if self.security(h,1,5,C.byref(owner),None,C.byref(acl),None,C.byref(sd)):
             raise ProfileSecurityError("Profile ACL cannot be read")
         try:
-            if not owner or self.sid_text(owner) != self.sid or not acl:
+            if not owner or not self.owner_allowed(self.sid_text(owner), protected) or not acl:
                 raise ProfileSecurityError("Unexpected profile owner or DACL")
             control=W.WORD(); rev=W.DWORD(); self.check(self.control(sd,C.byref(control),C.byref(rev)))
             if protected and not control.value & 0x1000: raise ProfileSecurityError("Inherited root DACL rejected")
