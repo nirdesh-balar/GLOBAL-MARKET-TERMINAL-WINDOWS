@@ -18,8 +18,6 @@ jobs:
         shell: pwsh
     env:
       PYTHONDONTWRITEBYTECODE: "1"
-      UV_PYTHON_INSTALL_DIR: ${{ runner.temp }}/gmt-python
-      UV_CACHE_DIR: ${{ runner.temp }}/gmt-uv-cache
     steps:
       - name: Checkout independent Windows source
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -28,6 +26,8 @@ jobs:
       - name: Record source and native runner
         run: |
           New-Item -ItemType Directory -Force reports | Out-Null
+          "UV_PYTHON_INSTALL_DIR=$env:RUNNER_TEMP/gmt-python" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "UV_CACHE_DIR=$env:RUNNER_TEMP/gmt-uv-cache" | Out-File -FilePath $env:GITHUB_ENV -Append
           $info = @{ sourceSHA = (git rev-parse HEAD); runnerOS = $env:RUNNER_OS; runnerArch = $env:RUNNER_ARCH; imageOS = $env:ImageOS; imageVersion = $env:ImageVersion; runURL = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"; installerExecution = 'NOT VERIFIED'; interactiveWindows11 = 'NOT VERIFIED' }
           $info | ConvertTo-Json | Set-Content reports/runner.json
           if ($env:RUNNER_OS -ne 'Windows' -or $env:RUNNER_ARCH -ne 'X64') { throw 'Native Windows x64 required' }
