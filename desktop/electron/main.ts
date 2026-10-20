@@ -1,9 +1,12 @@
 import { app, BrowserWindow, ipcMain, Menu, dialog, shell } from "electron";
-import { mkdirSync, readdirSync, realpathSync } from "node:fs";
+import { readdirSync, realpathSync } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { pathToFileURL } from "node:url";
 import { Backend } from "./backend";
+import { prepareProfile } from "./profile";
+import { NATIVE_CHANNEL, WINDOW_EVENT, operateWindow, validateNative, windowState } from "./native";
+import { validateCsvPath } from "./csv";
 import { backendExecutable, profilePath } from "./platform";
 import {
   CHANNEL,
@@ -25,6 +28,7 @@ if (
 app.setName("GLOBAL MARKET TERMINAL");
 const smokeArg = process.argv.find((a) => a.startsWith("--gmt-smoke-root="));
 let profile: string;
+let profileBase = app.getPath("appData");
 if (smokeArg) {
   const candidate = realpathSync(smokeArg.slice("--gmt-smoke-root=".length));
   const relative = path.relative(realpathSync(os.tmpdir()), candidate);
@@ -36,9 +40,17 @@ if (smokeArg) {
     readdirSync(candidate).length
   )
     throw Error("Smoke profile must be a new empty temporary test directory");
+  profileBase = candidate;
   profile = path.join(candidate, "profile");
 } else profile = profilePath(process.platform, app.getPath("appData"), root);
-mkdirSync(profile, { recursive: true });
+const backendCommand = backendExecutable(app.isPackaged ? process.resourcesPath : root, app.isPackaged);
+const backendArgs = app.isPackaged ? [] : [path.join(root, "backend", "launcher.py")];
+try { prepareProfile(backendCommand, backendArgs, profile, profileBase); }
+catch {
+  dialog.showErrorBox("GLOBAL MARKET TERMINAL", "Profile security validation failed. No profile was opened. Review the independent Windows profile permissions before restarting.");
+  app.exit(1);
+  throw Error("Profile security validation failed");
+}
 app.setPath("userData", profile);
 app.setPath("sessionData", path.join(profile, "session"));
 // No cookies/cache/history are needed for this offline shell.
@@ -112,8 +124,50 @@ async function openWindow() {
     if (!backend) throw Error("Local service unavailable");
     return operation === "status" ? backend.status() : backend.health();
   });
+  let dialogPending = false;
+  let windowPending = false;
+  const performWindow = async (operation: Parameters<typeof operateWindow>[1]) => {
+    if(operation === "state") return windowState(win);
+    if(windowPending) throw Error("Window transition in progress");
+    windowPending=true;
+    try {return await operateWindow(win,operation);} finally {windowPending=false;publishState();}
+  };
+  let requestCount = 0, requestEpoch = Date.now();
+  ipcMain.handle(NATIVE_CHANNEL, async (event, ...args: unknown[]) => {
+    try {
+      assertSender(event, win.webContents, expectedURL, event.senderFrame?.url ?? "");
+      const operation = validateNative(args);
+      if (Date.now() - requestEpoch >= 1000) { requestEpoch=Date.now(); requestCount=0; }
+      if (++requestCount > 60) throw Error("Request limit");
+      if (operation !== "previewCsv") return {ok:true,value:await performWindow(operation)};
+      if (dialogPending || !win.isFocused() || !win.isVisible() || win.isMinimized()) throw Error("Dialog unavailable");
+      dialogPending = true;
+      try {
+        const result = await dialog.showOpenDialog(win, {
+          title:"Validate CSV structure — preview only; no import",
+          properties:["openFile", "dontAddToRecent"], filters:[{name:"CSV (UTF-8, plain cells; maximum 64 KiB)",extensions:["csv"]}],
+        });
+        if (result.canceled) return {ok:true,value:{cancelled:true}};
+        if (result.filePaths.length !== 1) throw Error("Invalid selection");
+        let deadline: ReturnType<typeof setTimeout> | undefined;
+        try {
+          const value = await Promise.race([validateCsvPath(result.filePaths[0],{command:backendCommand,args:backendArgs}), new Promise<never>((_,reject) => { deadline=setTimeout(() => reject(Error("Selection timed out")),3000); })]);
+          return {ok:true,value};
+        } finally { clearTimeout(deadline); }
+      } finally { dialogPending=false; }
+    } catch { return {ok:false,error:"Native operation unavailable or selection rejected"}; }
+  });
+  const publishState = () => { if (!win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send(WINDOW_EVENT,windowState(win)); };
+  win.on("minimize",publishState).on("restore",publishState).on("maximize",publishState).on("unmaximize",publishState).on("enter-full-screen",publishState).on("leave-full-screen",publishState).on("focus",publishState).on("blur",publishState).on("resize",publishState);
+  win.webContents.on("before-input-event", (event,input) => {
+    if (input.type !== "keyDown" || input.isAutoRepeat) return;
+    if (input.key === "F11") { event.preventDefault(); void performWindow("toggleFullscreen").catch(() => {}); }
+    else if (input.key === "Escape" && win.isFullScreen()) { event.preventDefault(); void performWindow("exitFullscreen").catch(() => {}); }
+  });
   win.once("ready-to-show", () => win.show());
   win.on("closed", () => {
+    ipcMain.removeHandler(CHANNEL);
+    ipcMain.removeHandler(NATIVE_CHANNEL);
     window = undefined;
   });
   if (dev) await win.loadURL(expectedURL);
@@ -123,15 +177,7 @@ app
   .whenReady()
   .then(async () => {
     Menu.setApplicationMenu(null);
-    const command = backendExecutable(
-      app.isPackaged ? process.resourcesPath : root,
-      app.isPackaged,
-    );
-    backend = new Backend(
-      command,
-      app.isPackaged ? [] : [path.join(root, "backend", "launcher.py")],
-      profile,
-    );
+    backend = new Backend(backendCommand, backendArgs, profile);
     // The shell remains visible on startup failure, displaying a truthful failed status.
     const startup = backend.start().catch(() => {});
     await openWindow();

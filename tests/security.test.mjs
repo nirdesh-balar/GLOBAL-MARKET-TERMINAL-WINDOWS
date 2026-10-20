@@ -48,7 +48,7 @@ test("IPC requires the exact owner, main frame and expected document URL", () =>
     assert.throws(() => assertSender(v, wc, "a", "a"));
   assert.throws(() => assertSender(e, wc, "a", "b"));
 });
-test("preload exposes precisely three fixed operations without Node or token access", async () => {
+test("preload exposes precisely the reviewed fixed operations without Node or token access", async () => {
   let exposed;
   const calls = [];
   const fakeElectron = {
@@ -66,6 +66,7 @@ test("preload exposes precisely three fixed operations without Node or token acc
     },
   };
   vm.runInNewContext(fs.readFileSync("dist-electron/preload.cjs", "utf8"), {
+    setTimeout, clearTimeout,
     require: (name) => {
       assert.equal(name, "electron");
       return fakeElectron;
@@ -73,8 +74,11 @@ test("preload exposes precisely three fixed operations without Node or token acc
   });
   assert.deepEqual(Object.keys(exposed).sort(), [
     "health",
+    "onWindowState",
     "openAttribution",
+    "previewCsv",
     "status",
+    "window",
   ]);
   await exposed.health("/arbitrary", "secret");
   await exposed.status();
@@ -115,7 +119,7 @@ test("Mac preview paths remain separate from existing Mac profiles", () => {
   );
   assert.equal(
     profilePath("win32", "C:\\Users\\test\\AppData\\Roaming", "unused"),
-    "C:\\Users\\test\\AppData\\Roaming\\GlobalMarketTerminalWindows\\Phase1",
+    "C:\\Users\\test\\AppData\\Roaming\\GlobalMarketTerminalWindows.Native\\Desktop",
   );
   assert.throws(() => profilePath("linux", "x", "y"));
 });
@@ -127,4 +131,23 @@ test("packaging guards reject macOS, Linux and Windows ARM64", () => {
   ])
     assert.throws(() => assertWindowsPackaging(p, a));
   assert.doesNotThrow(() => assertWindowsPackaging("win32", "x64"));
+});
+
+test("native preload validates actions and events, removes listeners, and serializes errors without secrets", async () => {
+  let bridge, callback, removed=false;const calls=[];
+  const state={transitioning:false,minimized:false,maximized:false,fullscreen:false,focused:true,width:820,height:620};
+  const fake={contextBridge:{exposeInMainWorld:(_name,value)=>{bridge=value;}},ipcRenderer:{
+    invoke:async(channel,op)=>{calls.push([channel,op]);if(op==='previewCsv')throw Error('private-path-and-token-must-not-escape');return {ok:true,value:state};},
+    on:(name,fn)=>{assert.equal(name,'gmt:window-state');callback=fn;},
+    removeListener:(name,fn)=>{assert.equal(name,'gmt:window-state');assert.equal(fn,callback);removed=true;},
+  }};
+  vm.runInNewContext(fs.readFileSync('dist-electron/preload.cjs','utf8'),{require:name=>{assert.equal(name,'electron');return fake;},setTimeout,clearTimeout});
+  assert.deepEqual(JSON.parse(JSON.stringify(await bridge.window('state'))),state);
+  await assert.rejects(bridge.window('http://localhost'));
+  assert.equal(calls.length,1);
+  const received=[];const unsubscribe=bridge.onWindowState(value=>received.push(value));
+  callback({secret:'never exposed'},{...state,width:NaN});callback({secret:'never exposed'},state);
+  assert.equal(received.length,1);assert.deepEqual(JSON.parse(JSON.stringify(received[0])),state);
+  unsubscribe();assert.equal(removed,true);
+  await assert.rejects(bridge.previewCsv(),error=>!String(error).includes('private-path-and-token'));
 });

@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
-import type { ServiceStatus } from "../shared/contracts";
+import type { ServiceStatus, WindowAction, WindowState } from "../shared/contracts";
 import { ChartWorkspace } from "./ChartWorkspace";
 import { DrawingToolbar, MainToolbar, ToolButton } from "./TerminalControls";
 import { WatchlistSidebar } from "./WatchlistSidebar";
@@ -22,6 +22,34 @@ export default function App() {
     message: "Starting authenticated local service",
   });
   const [busy, setBusy] = useState(false);
+  const [nativeState, setNativeState] = useState<WindowState | null>(null);
+  const [csvBusy, setCsvBusy] = useState(false);
+  const runWindow = async (action: WindowAction) => {
+    try { setNativeState(await window.terminal.window(action)); }
+    catch { setNotice("Window operation unavailable. Use the native titlebar controls."); }
+  };
+  useEffect(() => {
+    void runWindow("state");
+    return window.terminal.onWindowState(setNativeState);
+  }, []);
+  useEffect(() => {
+    const shortcut = (event: KeyboardEvent) => {
+      if(event.defaultPrevented || event.repeat) return;
+      if(event.key === "F11") {event.preventDefault();void runWindow("toggleFullscreen");}
+      else if(event.key === "Escape" && nativeState?.fullscreen) {event.preventDefault();void runWindow("exitFullscreen");}
+    };
+    window.addEventListener("keydown",shortcut);
+    return () => window.removeEventListener("keydown",shortcut);
+  },[nativeState?.fullscreen]);
+  const previewCsv = async () => {
+    if(csvBusy) return;
+    setCsvBusy(true);
+    try {
+      const value=await window.terminal.previewCsv();
+      setNotice(value.cancelled ? "CSV selection cancelled. Nothing imported or saved." : `CSV structure valid: ${value.rows} rows, ${value.columns} columns, ${value.bytes} bytes. Preview only; nothing imported or saved.`);
+    } catch { setNotice("CSV selection rejected or unavailable. Choose a local plain UTF-8 CSV up to 64 KiB; quoted fields and formulas are not supported. Nothing imported or saved."); }
+    finally { setCsvBusy(false); }
+  };
   const checking = useRef(false);
   const [interval, setIntervalChoice] = useState<Interval>("1D");
   const [cursor, setCursor] = useState<"pointer" | "crosshair">("pointer");
@@ -174,7 +202,9 @@ export default function App() {
               </ToolButton>
               <ToolButton
                 label="Toggle workspace fullscreen"
-                planned="use native window controls; a secure fullscreen IPC operation is not exposed"
+                disabled={!nativeState || nativeState.transitioning}
+                aria-pressed={nativeState?.fullscreen ?? false}
+                onClick={() => void runWindow("toggleFullscreen")}
               >
                 <Maximize2 size={14} />
               </ToolButton>
@@ -411,6 +441,14 @@ export default function App() {
                 Show chart grid
               </label>
               <p>View choices last for this session only.</p>
+              <div className="native-window-actions" role="group" aria-label="Native window controls">
+                <button type="button" disabled={!nativeState || nativeState.transitioning} onClick={() => void runWindow("minimize")}>Minimize</button>
+                <button type="button" disabled={!nativeState || nativeState.transitioning || nativeState.fullscreen} onClick={() => void runWindow("toggleMaximize")}>{nativeState?.maximized ? "Restore window" : "Maximize window"}</button>
+                <button type="button" disabled={!nativeState || nativeState.transitioning} onClick={() => void runWindow("toggleFullscreen")}>{nativeState?.fullscreen ? "Exit fullscreen" : "Enter fullscreen"}</button>
+              </div>
+              <p>F11 toggles fullscreen · Escape exits fullscreen. Native titlebar controls remain available.</p>
+              <button type="button" className="connection-check" disabled={csvBusy} onClick={() => void previewCsv()}>Validate CSV structure</button>
+              <p>Native file selection; counts only, no import or export. Plain UTF-8 CSV, 64 KiB maximum.</p>
             </>
           ) : (
             <>

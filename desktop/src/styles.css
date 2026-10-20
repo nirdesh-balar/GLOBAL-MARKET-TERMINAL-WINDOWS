@@ -1062,3 +1062,6 @@ button svg {
     scroll-behavior: auto !important;
   }
 }
+
+.native-window-actions { display:flex; flex-wrap:wrap; gap:6px; }
+.native-window-actions button { color:var(--text-primary, #becadc); background:#111e2e; border:1px solid #2c405a; padding:5px 8px; border-radius:3px; font:inherit; cursor:pointer; }

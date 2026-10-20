@@ -366,15 +366,14 @@ try {
   check(
     "Twelve viewport changes resize the real canvas without accumulating canvases; reloading resets interval, grid, cursor and sidebar width; no web storage or IndexedDB databases",
   );
-  stage = "honest fullscreen availability";
-  assert.ok(
-    await page
-      .getByRole("button", { name: "Toggle workspace fullscreen", exact: true })
-      .isDisabled(),
-  );
-  check(
-    "Fullscreen entry remains explicitly disabled; native operating-system window controls are retained and IPC is unchanged",
-  );
+  stage = "native fullscreen availability";
+  const fullscreen = page.getByRole("button", { name: "Toggle workspace fullscreen", exact: true });
+  assert.equal(await fullscreen.isDisabled(),false);
+  await fullscreen.click();
+  await page.waitForFunction(async () => { const s=await window.terminal.window("state"); return s.fullscreen && !s.transitioning; });
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(async () => { const s=await window.terminal.window("state"); return !s.fullscreen && !s.transitioning; });
+  check("Secure native fullscreen control enters fullscreen; Escape exits; native titlebar controls remain available");
 
   assert.deepEqual(consoleErrors, []);
   check("No renderer console errors or uncaught exceptions");
@@ -399,7 +398,7 @@ try {
       interpretation:
         "Observed wall time includes automation; not an FPS benchmark",
     },
-    windowsCI: "NOT VERIFIED",
+    windowsCI: process.platform === "win32" ? "NATIVE WINDOWS EXECUTION" : "NOT VERIFIED",
   };
   fs.writeFileSync(
     path.join(reportRoot, "terminal-ui.json"),

@@ -1,0 +1,57 @@
+# Phase 2 native integration
+
+Baseline: `59defad3c5db7e57406029652f1130d89f17ccb4`. Development branch: `phase-2-native-integration`. No merge, production release, provider integration or Phase 3 work is authorized here.
+
+## Architecture review and changes
+
+The reviewed baseline had a sandboxed React renderer, three fixed preload operations, one authenticated GET /health route and an Electron-owned Python child. Its native frame worked, but renderer fullscreen was disabled. Windows profiles inherited AppData permissions without native ACL/reparse validation. Pipe EOF handled normal parent closure, but no independently observed native parent lifetime existed. There was no native file-dialog capability. Phase 1.1's terminal layout, chart canvas, watchlist and disabled future market controls are preserved.
+
+The existing gmt:read channel still accepts only status, health and constant TradingView attribution. The new gmt:native channel accepts one string (at most 32 characters), with an explicit allowlist: state, minimize, maximize, restore, toggleMaximize, enterFullscreen, exitFullscreen, toggleFullscreen, focus and previewCsv. Both channels verify owning webContents, exact main frame and expected document URL. There is no arbitrary method, URL, command, file path or HTTP route operation. Shared TypeScript contracts name each capability. New methods are window(action), onWindowState(callback) and previewCsv(). Raw Electron event objects never cross preload; state is reconstructed, bounded and validated, and listeners have explicit cleanup. Main rejects more than 60 native requests per second and overlapping window transitions/dialogs. Errors return fixed generic messages, never raw paths or exception contents.
+
+Window actions use supported BrowserWindow APIs. Fullscreen waits for enter/leave completion events with a five-second deadline. A transition flag and finally-published state avoid confusing a changed OS flag with a completed animation. Focus also focuses web contents. Native minimize/maximize/restore, fullscreen, focus and resize events update the renderer; F11 toggles fullscreen and Escape exits it. A fixed renderer keyboard fallback uses the same allowlisted IPC for synthetic/DOM keyboard delivery. Native Windows chrome/system controls remain enabled. No frameless window or application menu redesign was introduced.
+
+The existing chart-pane fullscreen button is functional. The settings popover adds compact native controls and a clearly named CSV structure validator. Import/export watchlist and screenshot controls remain disabled. CSV preview counts are temporary notices, never watchlist entries or market values.
+
+## Backend lifetime and fixed request architecture
+
+Authentication remains 256 random bits generated inside main, delivered over private stdin, absent from arguments/environment/logs/UI/disk. IPv4 loopback port 0 is bound once and retained through Uvicorn startup. Readiness now requires exactly ready/host/port. Startup, authenticated health and shutdown remain bounded; health uses a streaming 4096-byte response limit and a two-second AbortSignal across headers/body, and shutdown aborts pending health requests. Concurrent health callers share the same request. Shutdown is coalesced so repeated close/failure paths do not issue duplicate process kills.
+
+The Python process observes stdin EOF/authenticated shutdown and independently monitors its captured parent lifetime. Windows opens a SYNCHRONIZE-only handle to that parent and uses WaitForSingleObject; it does not search process names or terminate the parent. The Mac preview observes parent identity. The parent-death regression deliberately leaves a separate sleeper holding an inherited stdin writer, so EOF alone cannot satisfy the test. The sleeper is preserved and exits on its own timer. Graceful shutdown has a deadline; the fallback uses only the owned ChildProcess handle. On Windows Node maps termination signals to native process termination, not POSIX signal delivery. No shell, process-tree kill or unrelated-process termination is used.
+
+The only backend HTTP route remains authenticated health. Its existing version/phase fields describe the unchanged Phase 1 health contract, not the overall project milestone. Future routes must be separately named operations with route-specific request/response schemas, byte/deadline limits and cancellation; no generic fetch bridge was added. Failures produce restart guidance and no substitute data.
+
+## Stable independent Windows profile policy
+
+Normal Windows profile: per-user Roaming AppData / GlobalMarketTerminalWindows.Native / Desktop. This is a new stable name independent of GlobalMarketTerminalWindows/Phase1; no existing profile is deleted, opened, copied or migrated. Mac preview remains project-local .local-profile/mac-preview. Smoke tests use newly created, canonical temporary directories with a strict prefix, separate from normal profiles.
+
+Before Electron receives userData/sessionData, the bundled Python executable runs a fixed --secure-profile mode over stdin. The guard uses ctypes with explicit Win32 signatures; it adds no runtime dependency or shell command. It obtains the SID from the current process token, requires NTFS with persistent ACL support, and creates managed directories with an explicit owner and protected inheritable DACL: current user Full Control and SYSTEM Full Control. Ordinary unrelated users receive no ACE. Existing directories are checked rather than repaired; a different owner, null/extra/unexpected DACL, unprotected managed root, file in place of directory, path traversal, ADS, UNC, trailing-dot/space alias or reparse point fails closed.
+
+Ancestor handles opened with OPEN_REPARSE_POINT/BACKUP_SEMANTICS and without delete sharing pin the chain during creation/inspection. GetFileInformationByHandleEx checks reparse attributes; GetSecurityInfo, GetSecurityDescriptorControl and GetAce check actual owner/DACL. Existing descendants are inspected with a 10,000-entry bound. Creation supplies the security descriptor atomically to CreateDirectoryW rather than chmod after creation. Failure stops startup before opening the application profile and shows safe guidance. No elevation or broad privileged helper is requested.
+
+Threat boundary: unrelated ordinary local users. Same-user hostile code and administrators can modify user-owned objects after the helper exits; this is not a same-user/admin sandbox. Alternate-user and real Windows 11 desktop acceptance remain a separate interactive test. Normal profile creation/validation and junction rejection must pass on the actual Windows runner; Mac permission results are not Windows proof.
+
+No SQLite workspace database, market candles, quotes, watchlists, drawings, layouts, alerts or personal preferences are written. React holds view state only. Electron/Chromium and Windows can create runtime files such as Local State, crash/lock files, GPU/shader caches and session infrastructure; their exact names depend on runtime/OS. They inherit the restricted profile ACL. HTTP cache is disabled and renderer session partition is in memory. This does not promise zero disk writes or automatic removal of incidental files.
+
+## CSV dialog foundation and limits
+
+A focused, visible owning window can request one native showOpenDialog. It is configured for one .csv file, with dontAddToRecent, and supplies no renderer-chosen path. The user can cancel; cancellation reads nothing. No automatic selection, background import, export or silent write exists. Native picker use is an explicit settings button; a compromised trusted renderer can request a dialog, but cannot choose its result or read arbitrary paths through IPC.
+
+Only counts (rows, columns and bytes) return to the renderer. Neither path/name nor file content returns. The dialect is deliberately narrow: UTF-8 (optional BOM), plain unquoted comma-separated cells, uniform 1–16 columns, at most 501 rows, at most 128 characters per cell and 64 KiB total. NUL/control characters, malformed UTF-8, quoted/multiline fields and formula-like prefixes are rejected. This validates structure only; it does not validate instruments, schema, provider permissions or watchlist semantics. There is no complete CSV import/export claim.
+
+Windows selected-file reads execute in a bounded owned helper. The path must be absolute, normalized, on a local fixed drive, .csv and free of traversal/ADS/UNC/alias forms. Win32 ancestor/file handles reject all reparse points, deny rename/delete, and the final read denies concurrent write sharing. The file must be regular and bounded. No content is saved. Timeout terminates only that helper. Mac preview uses conservative no-follow checks, a bounded descriptor read and mutation checks. A native picker can remain open until user cancellation; preload reports a two-minute deadline and asks the user to dismiss it, without starting another concurrent dialog. OS recent-file/privacy behavior beyond dontAddToRecent is not guaranteed.
+
+## Validation and remaining issues
+
+Existing tests remain active. The preload exact-surface test now names the six reviewed methods and adds malformed native action/event and safe-error checks. The old disabled-fullscreen assertion is replaced by actual enter/Escape-exit assertions. New suites test CSV limits, path boundaries, native controls, state events, keyboard paths, UI/canvas recovery, untrusted senders, dialog API options, cancellation, no persistence and close/reopen. Dialog tests inject the native API result to exercise real file validation deterministically; they do not claim interactive OS picker automation. Native Windows-only tests explicitly collect owner/DACL/inheritance, unexpected-permission, traversal/file, junction/reparse and selected-file cases. They are not collected as skipped POSIX tests. Native and packaged runs are required before completion.
+
+Reviewed npm audit still reports eight moderate build-tool dependency paths and no high/critical finding. No upgrade/forced audit fix was applied. Package author metadata now identifies the public project owner without personal email. The default icon remains pending owner-approved branding. PyInstaller's optional tzdata warning remains: the backend has no market/timezone feature; no new dependency or hook suppression was added. fancy-canvas provenance/full notice and embedded tslib notice review remain distribution blockers. Official signing, Windows 11 install/uninstall, Defender/SmartScreen, DPI/accessibility, alternate users and real picker interaction remain unverified until actually tested. No security protection is bypassed.
+
+## Authoritative API references
+
+- [Electron BrowserWindow](https://www.electronjs.org/docs/latest/api/browser-window)
+- [Electron dialog](https://www.electronjs.org/docs/latest/api/dialog)
+- [Microsoft file security and access rights](https://learn.microsoft.com/en-us/windows/win32/fileio/file-security-and-access-rights)
+- [GetSecurityInfo](https://learn.microsoft.com/en-us/windows/win32/api/aclapi/nf-aclapi-getsecurityinfo)
+- [CreateFileW handle semantics](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew)
+- [WaitForSingleObject](https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject)
+- [Security descriptor string format](https://learn.microsoft.com/en-us/windows/win32/secauthz/security-descriptor-string-format)

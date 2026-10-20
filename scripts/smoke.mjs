@@ -61,7 +61,7 @@ try {
     session: sessionStorage.length,
   }));
   assert.deepEqual(shape, {
-    bridge: ["health", "openAttribution", "status"],
+    bridge: ["health", "onWindowState", "openAttribution", "previewCsv", "status", "window"],
     node: "undefined",
     process: "undefined",
     local: 0,

@@ -10,6 +10,7 @@ await run(process.execPath, [
   "tests/backend.test.mjs",
   "tests/production.test.mjs",
   "tests/terminal.test.mjs",
+  "tests/native.test.mjs",
 ]);
 await run(python, [
   "-m",
@@ -21,3 +22,6 @@ await run(python, [
 await run(process.execPath, ["scripts/smoke.mjs"]);
 
 await run(process.execPath, ["scripts/terminal-ui.mjs"]);
+
+if (process.platform === "win32") await run(python,["-m","pytest","backend/windows_tests","-q","--junitxml=reports/windows-security.xml"]);
+await run(process.execPath,["scripts/native-smoke.mjs"]);
