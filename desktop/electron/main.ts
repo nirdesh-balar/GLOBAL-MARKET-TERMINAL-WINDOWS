@@ -47,7 +47,9 @@ const backendCommand = backendExecutable(app.isPackaged ? process.resourcesPath 
 const backendArgs = app.isPackaged ? [] : [path.join(root, "backend", "launcher.py")];
 try { prepareProfile(backendCommand, backendArgs, profile, profileBase); }
 catch {
-  dialog.showErrorBox("GLOBAL MARKET TERMINAL", "Profile security validation failed. No profile was opened. Review the independent Windows profile permissions before restarting.");
+  const message="Profile security validation failed. No profile was opened. Review the independent Windows profile permissions before restarting.";
+  if(process.env.CI === "true") process.stderr.write(message+"\n");
+  else dialog.showErrorBox("GLOBAL MARKET TERMINAL", message);
   app.exit(1);
   throw Error("Profile security validation failed");
 }

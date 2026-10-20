@@ -30,13 +30,16 @@ def is_shutdown(line, token):
 
 
 def main():
-    parent_pid = os.getppid()
+    immediate_parent = os.getppid()
     line = sys.stdin.buffer.readline(4097)
     if len(line) > 4096 or not line.endswith(b"\n"):
         raise ValueError("Invalid bootstrap protocol")
     value = json.loads(line)
-    if not isinstance(value, dict) or set(value) != {"token"} or not isinstance(value["token"], str):
+    if not isinstance(value, dict) or set(value) not in ({"token"}, {"token", "parentPid"}) or not isinstance(value["token"], str):
         raise ValueError("Invalid bootstrap protocol")
+    parent_pid = value.get("parentPid", immediate_parent)
+    if type(parent_pid) is not int or not 0 < parent_pid < 2**32:
+        raise ValueError("Invalid bootstrap parent")
     token = value["token"]
     app = create_app(token)
     sock = bind_loopback()
@@ -71,21 +74,28 @@ def main():
                 kernel.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
                 kernel.WaitForSingleObject.restype = wintypes.DWORD
                 kernel.CloseHandle.argtypes = [wintypes.HANDLE]
-                handle = kernel.OpenProcess(0x100000, False, parent)
-                if not handle:
-                    loop.call_soon_threadsafe(setattr, server, "should_exit", True)
-                    return
+                # Windows venv redirectors may be the immediate parent. Observe
+                # both the explicit Electron owner and any launch shim.
+                handles = []
                 try:
-                    while not server.should_exit:
-                        result = kernel.WaitForSingleObject(handle, 250)
-                        if result != 258:  # WAIT_TIMEOUT; fail closed on errors.
+                    for pid in {parent, immediate_parent}:
+                        handle = kernel.OpenProcess(0x100000, False, pid)
+                        if not handle:
                             loop.call_soon_threadsafe(setattr, server, "should_exit", True)
                             return
+                        handles.append(handle)
+                    while not server.should_exit:
+                        for handle in handles:
+                            result = kernel.WaitForSingleObject(handle, 250)
+                            if result != 258:  # WAIT_TIMEOUT; fail closed on errors.
+                                loop.call_soon_threadsafe(setattr, server, "should_exit", True)
+                                return
                 finally:
-                    kernel.CloseHandle(handle)
+                    for handle in handles:
+                        kernel.CloseHandle(handle)
             else:
                 while not server.should_exit:
-                    if os.getppid() != parent:
+                    if os.getppid() != immediate_parent:
                         loop.call_soon_threadsafe(setattr, server, "should_exit", True)
                         return
                     time.sleep(0.25)

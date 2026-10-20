@@ -102,7 +102,7 @@ import json,os,secrets,subprocess,sys,time
 command=json.loads(sys.argv[1])
 child=subprocess.Popen(command,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL)
 token=secrets.token_hex(32)
-child.stdin.write((json.dumps({'token':token})+'\n').encode());child.stdin.flush()
+child.stdin.write((json.dumps({'token':token,'parentPid':os.getpid()})+'\n').encode());child.stdin.flush()
 ready=json.loads(child.stdout.readline())
 os.set_inheritable(child.stdin.fileno(),True)
 holder=subprocess.Popen([sys.executable,'-c','import time;time.sleep(12)'],close_fds=False,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)

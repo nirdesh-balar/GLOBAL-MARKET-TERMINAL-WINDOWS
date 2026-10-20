@@ -86,7 +86,21 @@ try {
   const initial=await reopened.evaluate(()=>window.terminal.window("state"));assert.equal(initial.fullscreen,false);assert.equal(initial.maximized,false);
   await app.close();app=undefined;
   checks.push("Close and reopen starts a clean native window and authenticated owned backend; normal shutdown succeeds");
+  if(process.platform === "win32") {
+    // Use the real new stable Windows profile twice, without a smoke override.
+    // The ephemeral CI user owns it; do not remove/migrate any existing profile.
+    config.args=packaged?[]:[root];
+    for(let attempt=0;attempt<2;attempt++) {
+      app=await electron.launch(config);const normal=await app.firstWindow();
+      await normal.locator('[data-testid="service-status"][data-state="ready"]').waitFor({timeout:25000});
+      const s=await normal.evaluate(()=>window.terminal.window("state"));
+      assert.equal(s.fullscreen,false);assert.equal(s.maximized,false);
+      assert.deepEqual(await normal.evaluate(async()=>({local:localStorage.length,session:sessionStorage.length,databases:(await indexedDB.databases()).length})),{local:0,session:0,databases:0});
+      await app.close();app=undefined;
+    }
+    checks.push("Actual stable Windows profile reopens after Chromium incidental files; native ACL revalidation and default memory-only state pass");
+  }
   fs.writeFileSync(reportPath,JSON.stringify({result:"PASS",platform:process.platform,arch:process.arch,packaged,checks,checkCount:checks.length,nativePickerInteraction:"NOT VERIFIED: dialog API injected; filesystem validation real",interactiveWindows11:"NOT VERIFIED"},null,2));
   console.log({result:"PASS",checkCount:checks.length,platform:process.platform,packaged});
-} catch(error) { const diagnostic=app ? await app.evaluate(({BrowserWindow})=>({keys:globalThis.__keys,fullscreen:BrowserWindow.getAllWindows()[0]?.isFullScreen(),focused:BrowserWindow.getAllWindows()[0]?.isFocused()})).catch(()=>null) : null;fs.writeFileSync(reportPath,JSON.stringify({result:"FAIL",stage,error:String(error),checks,diagnostic},null,2));throw error;}
+} catch(error) { const diagnostic=app ? await app.evaluate(({BrowserWindow})=>({keys:globalThis.__keys,fullscreen:BrowserWindow.getAllWindows()[0]?.isFullScreen(),focused:BrowserWindow.getAllWindows()[0]?.isFocused(),visible:BrowserWindow.getAllWindows()[0]?.isVisible(),minimized:BrowserWindow.getAllWindows()[0]?.isMinimized(),bounds:BrowserWindow.getAllWindows()[0]?.getBounds()})).catch(()=>null) : null;fs.writeFileSync(reportPath,JSON.stringify({result:"FAIL",stage,error:String(error),checks,diagnostic},null,2));throw error;}
 finally {if(app)await app.close();}

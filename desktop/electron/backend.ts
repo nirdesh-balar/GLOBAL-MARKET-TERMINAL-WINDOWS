@@ -150,7 +150,7 @@ export class Backend {
         child.once("error", failed);
         child.once("exit", earlyExit);
         child.stdout.on("data", data);
-        child.stdin.write(JSON.stringify({ token: this.#token }) + "\n");
+        child.stdin.write(JSON.stringify({ token: this.#token, parentPid: process.pid }) + "\n");
       });
       child.stdout.resume();
       await this.health();

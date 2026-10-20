@@ -1,5 +1,5 @@
 import type { EventEmitter } from "node:events";
-import type { BrowserWindow } from "electron";
+import { app, type BrowserWindow } from "electron";
 import type { WindowAction, WindowState } from "../shared/contracts";
 export const NATIVE_CHANNEL = "gmt:native";
 export const WINDOW_EVENT = "gmt:window-state";
@@ -34,6 +34,6 @@ export async function operateWindow(win: BrowserWindow, action: WindowAction) {
     }); } finally { transitions.delete(win); }
     }
   }
-  else if (action === "focus") { if(win.isMinimized()) win.restore(); win.focus(); win.webContents.focus(); }
+  else if (action === "focus") { if(win.isMinimized()) win.restore(); win.show(); win.moveTop(); if(process.platform === "darwin") app.focus({steal:true}); win.focus(); win.webContents.focus(); }
   return windowState(win);
 }
