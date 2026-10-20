@@ -1,0 +1,25 @@
+GLOBAL MARKET TERMINAL — Windows, Phase 1 (0.1.0)
+Independent implementation; no market-data redistribution rights are granted.
+
+TradingView Lightweight Charts™
+Copyright (с) 2025 TradingView, Inc. https://www.tradingview.com/
+Lightweight Charts 5.2.1 is licensed under Apache License 2.0.
+Source: https://github.com/tradingview/lightweight-charts/tree/v5.2.1
+The attribution logo remains enabled and the dashboard links to TradingView.
+See THIRD_PARTY_NOTICES/npm/lightweight-charts/LICENSE.
+
+React, React DOM and scheduler: MIT. Lucide icons: ISC (see package license).
+The frozen backend uses FastAPI, Starlette, Uvicorn, Pydantic and dependencies;
+their exact installed versions and available notices are inventoried separately.
+PyInstaller is GPL-2.0-or-later with its bootloader distribution exception.
+Source: https://pyinstaller.org/en/v6.19.0/license.html
+Electron/Chromium include their own third-party notices in the native distribution.
+
+Read-only architectural reference:
+nirdesh-balar/GLOBAL-MARKET-TERMINAL at
+2c6714489aa08dfdab60c007765b404efd6edb3d.
+Copyright (c) 2026 Nirdesh Balar. Upstream MIT text is retained separately in
+THIRD_PARTY_NOTICES/SOURCE-REFERENCE-LICENSE.txt. No upstream source tree,
+Git history, user profile, market data, native Mac module or artwork was imported.
+New source remains UNLICENSED pending the owner's explicit licensing decision.
+This does not alter third-party license obligations.

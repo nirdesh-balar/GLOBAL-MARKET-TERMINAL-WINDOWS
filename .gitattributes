@@ -1,0 +1,2 @@
+# Preserve upstream license/notice whitespace byte-for-byte.
+THIRD_PARTY_NOTICES/** -whitespace

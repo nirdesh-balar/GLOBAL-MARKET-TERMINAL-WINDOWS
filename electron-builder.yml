@@ -1,0 +1,33 @@
+appId: io.github.nirdeshbalar.globalmarketterminal.windows.phase1
+productName: GLOBAL MARKET TERMINAL
+artifactName: GMT-Windows-0.1.0-dev-x64-Setup.${ext}
+directories:
+  output: release
+files:
+  - dist/**/*
+  - dist-electron/main.cjs
+  - dist-electron/preload.cjs
+  - package.json
+  - NOTICE
+  - THIRD_PARTY_NOTICES/**/*
+extraResources:
+  - from: backend/dist/gmt-windows-backend
+    to: backend
+  - from: THIRD_PARTY_NOTICES
+    to: THIRD_PARTY_NOTICES
+asar: true
+npmRebuild: false
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  executableName: GlobalMarketTerminalWindows
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: false
+  createStartMenuShortcut: true
+  deleteAppDataOnUninstall: false
+publish: null

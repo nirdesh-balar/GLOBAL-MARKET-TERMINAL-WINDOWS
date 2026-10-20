@@ -1,0 +1,16 @@
+node_modules/
+backend/.venv/
+backend/build/
+backend/dist/
+__pycache__/
+*.pyc
+.pytest_cache/
+dist/
+dist-electron/
+release/
+.local-profile/
+reports/
+work/
+.DS_Store
+*.log
+.env

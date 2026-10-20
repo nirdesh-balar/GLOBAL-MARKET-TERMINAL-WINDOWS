@@ -1,0 +1,97 @@
+[
+  {
+    "path": "package.json",
+    "blobSHA": "9d1d0c1e05541fd1b5901fdcc8f95bf1ca6e69fb",
+    "ref": "2c6714489aa08dfdab60c007765b404efd6edb3d"
+  },
+  {
+    "path": "desktop/electron/main.ts",
+    "blobSHA": "9237c153ed6452614fc8943bd7e172a62a8b38ab",
+    "ref": "2c6714489aa08dfdab60c007765b404efd6edb3d"
+  },
+  {
+    "path": "desktop/electron/preload.ts",
+    "blobSHA": "d2a18c79c87a9dca37cd8ea154e5cbfacb309a97",
+    "ref": "2c6714489aa08dfdab60c007765b404efd6edb3d"
+  },
+  {
+    "path": "desktop/electron/backendLifecycle.ts",
+    "blobSHA": "dc55237005424444c6949aeb9c5b02ec3f9c547a",
+    "ref": "2c6714489aa08dfdab60c007765b404efd6edb3d"
+  },
+  {
+    "path": "desktop/electron/platform.ts",
+    "blobSHA": "6a3cfad63d02a421b3d8cd15d7d0a4ec29341ee0",
+    "ref": "2c6714489aa08dfdab60c007765b404efd6edb3d"
+  },
+  {
+    "path": "desktop/src/App.tsx",
+    "blobSHA": "0e2d7712afbc42173ec7afb1d680361fa73a5ded",
+    "ref": "2c6714489aa08dfdab60c007765b404efd6edb3d"
+  },
+  {
+    "path": "desktop/src/charts/ChartPane.tsx",
+    "blobSHA": "bef35652d26abb0be8663442b9e79db2d701985a",
+    "ref": "2c6714489aa08dfdab60c007765b404efd6edb3d"
+  },
+  {
+    "path": "desktop/src/types.ts",
+    "blobSHA": "254caa73fae1faf6d8749b7035e243ce41256779",
+    "ref": "2c6714489aa08dfdab60c007765b404efd6edb3d"
+  },
+  {
+    "path": "backend/app/main.py",
+    "blobSHA": "2fec711b07d2e33ebfde40624ff113386e19e3c9",
+    "ref": "2c6714489aa08dfdab60c007765b404efd6edb3d"
+  },
+  {
+    "path": "backend/launcher.py",
+    "blobSHA": "6cee83a02fd7ab1c5cb25fac9846a365b189d863",
+    "ref": "2c6714489aa08dfdab60c007765b404efd6edb3d"
+  },
+  {
+    "path": "backend/app/history.py",
+    "blobSHA": "92d5c1ecb6c28c6fa417bf995f113aec98c707ea",
+    "ref": "2c6714489aa08dfdab60c007765b404efd6edb3d"
+  },
+  {
+    "path": "backend/app/database.py",
+    "blobSHA": "2954e1e9e28458cd060a47fb9ad94a50e0ea325f",
+    "ref": "2c6714489aa08dfdab60c007765b404efd6edb3d"
+  },
+  {
+    "path": "backend/app/profile_paths.py",
+    "blobSHA": "facf2d082a905bf41836a3cf4067c3af899d5ef7",
+    "ref": "2c6714489aa08dfdab60c007765b404efd6edb3d"
+  },
+  {
+    "path": "backend/app/profile_security.py",
+    "blobSHA": "2959d6cc68f339359699969ef9a9ca1cd69981f6",
+    "ref": "2c6714489aa08dfdab60c007765b404efd6edb3d"
+  },
+  {
+    "path": "docs/BUILD.md",
+    "blobSHA": "969de5a8e55a2811ed0a5dc30afd66a1a8a65778",
+    "ref": "2c6714489aa08dfdab60c007765b404efd6edb3d"
+  },
+  {
+    "path": "docs/TESTING.md",
+    "blobSHA": "9f3512a01d25e877b570f5e579eb0eef46ba7018",
+    "ref": "2c6714489aa08dfdab60c007765b404efd6edb3d"
+  },
+  {
+    "path": "docs/LICENSE-AUDIT.md",
+    "blobSHA": "797113b417e4fac17cf2390a0d83fe4f908bbd97",
+    "ref": "2c6714489aa08dfdab60c007765b404efd6edb3d"
+  },
+  {
+    "path": "LICENSE",
+    "blobSHA": "af26ba928703c1bd9fa26eccbc1fbe93ccb8dc3f",
+    "ref": "2c6714489aa08dfdab60c007765b404efd6edb3d"
+  },
+  {
+    "path": "NOTICE",
+    "blobSHA": "6edd4946c964bb272e38f11326f4a01eb9f1c0cd",
+    "ref": "2c6714489aa08dfdab60c007765b404efd6edb3d"
+  }
+]
